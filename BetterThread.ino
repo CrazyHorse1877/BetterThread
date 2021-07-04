@@ -4,6 +4,11 @@
 #include <TimeAlarms.h>
 #include <Thread.h>
 
+// This is a Arduino project using a threads to
+// monitor inputs and control outputs
+
+// Written by Phil way back in 2015
+
 // Baud rate for bluetooth module
 // (Default 9600 for most modules)
 #define BAUD_RATE 9600
@@ -82,7 +87,7 @@ Thread keepCount =  Thread();
 Thread pwmThread =  Thread();
 
 void setup(){
-  
+
   // initialize BT Serial port
   Serial.begin(BAUD_RATE);
 
@@ -91,18 +96,18 @@ void setup(){
     pinMode(ButtonPins[i], INPUT);
     digitalWrite(ButtonPins[i], HIGH);
   }
-  
+
   setTime(00,00,00,1,1,15); // set time to Saturday 8:29:00am Jan 1 2011
   Alarm.timerRepeat(1, Repeats);            // timer for every 1 seconds
   //Alarm.timerRepeat(5, showClock);            // timer for every 2 seconds
-    
+
   // initialize all the readings to 0:
   for (int thisReading = 0; thisReading < numReadings; thisReading++)
     readings[thisReading] = 0;
-    
+
 	pinMode(ledPin, OUTPUT);
   //pinMode(PWM_Pin, OUTPUT);
-  
+
   // Initialize Output PORTS
   for (int i = 0; i < MAX_RELAYS; i++) {
     pinMode(RelayPins[i], OUTPUT);
@@ -121,7 +126,7 @@ if(SERVO_ON){
   for (int i = 0; i < MAX_RELAYS; i++) {
     // Turn on and off according to relay status
     String stringNumber = String(i);
-    
+
     if ((RelayStatus & (1 << i)) == 0) {
       digitalWrite(RelayPins[i], LOW);
       Serial.println("<Butn" + RelayAppId[i] + ":0");
@@ -132,12 +137,12 @@ if(SERVO_ON){
     }
   }
 
-   
+
 //SETUP THREADS
-    
+
 //  pinThread.onRun(togglePin);
 //  pinThread.setInterval(500);
-  
+
   writeThread.onRun(writeRunning);
   writeThread.setInterval(30);
 
@@ -160,7 +165,7 @@ void loop(){
   String sSampleNo;
   int iSample;
   int appData;
-  
+
 	// checks if thread should run
 	if(pinThread.shouldRun()) pinThread.run();
   if(writeThread.shouldRun()) writeThread.run();
@@ -269,7 +274,7 @@ void digitalClockDisplay(){
   Serial.print(hour());
   printDigits(minute());
   printDigits(second());
-  Serial.println(); 
+  Serial.println();
 }
 
 void printDigits(int digits){
@@ -338,7 +343,7 @@ void readFromApp(){
     // ===========================================================
   // This is the point were you get data from the App
   int appData;
-    
+
   appData = Serial.read();   // Get a byte from app, if available
   switch (appData) {
     case CMD_SPECIAL:
@@ -373,12 +378,12 @@ void readFromApp(){
         else if (appData == CMD_OFF[i]) setRelayState(i, 0);
       }
   }
-  
+
 }
 
 void sendAnalog2BT(){
     String sSample;
-    
+
     sSample = String(LDR_Average);
     Serial.println("<Text00:Light1: " + sSample);
     if (LDR_Average > 383) Serial.println("<Imgs00:1"); // Day state
@@ -414,7 +419,7 @@ void sendAnalog2BT(){
       Serial.println("<Imgs03:2"); // Extra state
     else
       Serial.println("<Imgs03:0"); // Default state
- */ 
+ */
 }
 
 void updateAnalog(){
@@ -439,7 +444,7 @@ void updateAnalog(){
   // calculate the average:
   LDR_Average = total / numReadings;
   // send it to the computer as ASCII digits
-  
+
       ldr_flag &= ~0x01;
     }
 }
@@ -473,7 +478,7 @@ void setDriveMode(){
         Serial.println("<TtoS00: Time to open the door");
         Alarm.delay(2000);
       }
-        
+
       //If Night and door open
       if((daylight_flag & 0x01) && (door_state & 0x02) && (motor_control_flag == 0x00)){
         //Then motor_control_flag = 0x10 // Close me
@@ -486,7 +491,7 @@ void setDriveMode(){
 
 void onReachedEnd(){
     // Do every 5 sec
-    if ((drivetimer >= 10) && (motor_control_flag & 0x02)){ //Driven UP 
+    if ((drivetimer >= 10) && (motor_control_flag & 0x02)){ //Driven UP
 //      PORTC &= ~(1<<4);   //Motor output = OFF
           setRelayState(1, 1);
           Serial.println("<TtoS00: stopped");
@@ -531,9 +536,9 @@ void driveMotor(){
       setRelayState(1, 0); //Motor Relay set to ON
       Serial.println("<TtoS00: driving down");
       Alarm.delay(2000);
-//    setRelayState(2, !digitalRead(RelayPins[2]));  manual 
+//    setRelayState(2, !digitalRead(RelayPins[2]));  manual
       motor_control_flag = 0x20;//Going Down
-      
+
 //      timer2_flag |= 0x01;
     }
 }
@@ -552,4 +557,3 @@ void writeRunning(){
   Serial.print("PWM: ");
   Serial.println(clicks);
 }
-
